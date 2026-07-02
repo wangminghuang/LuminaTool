@@ -27,6 +27,7 @@ export function meta({}: Route.MetaArgs) {
 interface PdfSettings {
   fontSize: number
   lineHeight: number
+  headingSpacing: number
   marginTop: number
   marginBottom: number
   marginHorizontal: number
@@ -95,10 +96,11 @@ export default function Home() {
   const [exporting, setExporting] = useState(false)
   const [settings, setSettings] = useState<PdfSettings>({
     fontSize: 14,
-    lineHeight: 1.6,
-    marginTop: 20,
-    marginBottom: 20,
-    marginHorizontal: 20,
+    lineHeight: 1,
+    headingSpacing: 1.5,
+    marginTop: 8,
+    marginBottom: 8,
+    marginHorizontal: 8,
     fontFamily: FONT_OPTIONS[0].value,
     pageSize: 'a4',
     theme: 'light',
@@ -197,7 +199,8 @@ export default function Home() {
     lineHeight: settings.lineHeight,
     fontFamily: settings.fontFamily,
     padding: `${settings.marginTop}px ${settings.marginHorizontal}px ${settings.marginBottom}px ${settings.marginHorizontal}px`,
-  }
+    '--heading-spacing': `${settings.headingSpacing}em`,
+  } as React.CSSProperties
 
   return (
     <div className="app">
@@ -235,6 +238,15 @@ export default function Home() {
               onChange={(e) => updateSetting('fontSize', Number(e.target.value))}
               className="settings-input settings-input-wide"
             />
+            <input
+              type="number"
+              min="10"
+              max="24"
+              step="1"
+              value={settings.fontSize}
+              onChange={(e) => updateSetting('fontSize', Number(e.target.value))}
+              className="settings-number"
+            />
           </div>
 
           {/* Line Height */}
@@ -248,6 +260,38 @@ export default function Home() {
               value={settings.lineHeight}
               onChange={(e) => updateSetting('lineHeight', Number(e.target.value))}
               className="settings-input settings-input-wide"
+            />
+            <input
+              type="number"
+              min="1"
+              max="3"
+              step="0.1"
+              value={settings.lineHeight}
+              onChange={(e) => updateSetting('lineHeight', Number(e.target.value))}
+              className="settings-number"
+            />
+          </div>
+
+          {/* Heading Spacing */}
+          <div className="settings-group">
+            <label className="settings-label">标题间距: {settings.headingSpacing}em</label>
+            <input
+              type="range"
+              min="0.2"
+              max="3"
+              step="0.1"
+              value={settings.headingSpacing}
+              onChange={(e) => updateSetting('headingSpacing', Number(e.target.value))}
+              className="settings-input settings-input-wide"
+            />
+            <input
+              type="number"
+              min="0.2"
+              max="3"
+              step="0.1"
+              value={settings.headingSpacing}
+              onChange={(e) => updateSetting('headingSpacing', Number(e.target.value))}
+              className="settings-number"
             />
           </div>
 
@@ -295,6 +339,15 @@ export default function Home() {
               onChange={(e) => updateSetting('marginTop', Number(e.target.value))}
               className="settings-input"
             />
+            <input
+              type="number"
+              min="0"
+              max="50"
+              step="1"
+              value={settings.marginTop}
+              onChange={(e) => updateSetting('marginTop', Number(e.target.value))}
+              className="settings-number"
+            />
           </div>
           <div className="settings-group">
             <label className="settings-label">下边距: {settings.marginBottom}mm</label>
@@ -307,6 +360,15 @@ export default function Home() {
               onChange={(e) => updateSetting('marginBottom', Number(e.target.value))}
               className="settings-input"
             />
+            <input
+              type="number"
+              min="0"
+              max="50"
+              step="1"
+              value={settings.marginBottom}
+              onChange={(e) => updateSetting('marginBottom', Number(e.target.value))}
+              className="settings-number"
+            />
           </div>
           <div className="settings-group">
             <label className="settings-label">左右边距: {settings.marginHorizontal}mm</label>
@@ -318,6 +380,15 @@ export default function Home() {
               value={settings.marginHorizontal}
               onChange={(e) => updateSetting('marginHorizontal', Number(e.target.value))}
               className="settings-input"
+            />
+            <input
+              type="number"
+              min="0"
+              max="50"
+              step="1"
+              value={settings.marginHorizontal}
+              onChange={(e) => updateSetting('marginHorizontal', Number(e.target.value))}
+              className="settings-number"
             />
           </div>
 

@@ -85,6 +85,17 @@ body {
   width: 10rem;
 }
 
+.settings-number {
+  width: 5rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  background: #ffffff;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
 .settings-select {
   height: 2rem;
   padding: 0 0.5rem;
@@ -252,7 +263,8 @@ body {
 .markdown-preview h1 {
   font-size: 2em;
   font-weight: 700;
-  margin: 0.67em 0;
+  margin-top: var(--heading-spacing, 1.5em);
+  margin-bottom: calc(var(--heading-spacing, 1.5em) * 0.5);
   padding-bottom: 0.3em;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -260,7 +272,8 @@ body {
 .markdown-preview h2 {
   font-size: 1.5em;
   font-weight: 600;
-  margin: 0.83em 0;
+  margin-top: var(--heading-spacing, 1.5em);
+  margin-bottom: calc(var(--heading-spacing, 1.5em) * 0.5);
   padding-bottom: 0.25em;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -268,13 +281,30 @@ body {
 .markdown-preview h3 {
   font-size: 1.25em;
   font-weight: 600;
-  margin: 1em 0;
+  margin-top: var(--heading-spacing, 1.5em);
+  margin-bottom: calc(var(--heading-spacing, 1.5em) * 0.5);
 }
 
 .markdown-preview h4 {
   font-size: 1em;
   font-weight: 600;
-  margin: 1.33em 0;
+  margin-top: var(--heading-spacing, 1.5em);
+  margin-bottom: calc(var(--heading-spacing, 1.5em) * 0.5);
+}
+
+.markdown-preview h5 {
+  font-size: 0.875em;
+  font-weight: 600;
+  margin-top: var(--heading-spacing, 1.5em);
+  margin-bottom: calc(var(--heading-spacing, 1.5em) * 0.5);
+}
+
+.markdown-preview h6 {
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-top: var(--heading-spacing, 1.5em);
+  margin-bottom: calc(var(--heading-spacing, 1.5em) * 0.5);
+  color: #6b7280;
 }
 
 .markdown-preview p {
