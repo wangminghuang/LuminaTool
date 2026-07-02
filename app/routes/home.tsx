@@ -264,7 +264,7 @@ export default function Home() {
         format: settings.pageSize,
         orientation: 'portrait' as const,
       },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'pre', 'table', 'tr', 'img'] },
     }
 
     try {
