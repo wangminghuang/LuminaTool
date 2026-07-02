@@ -246,3 +246,182 @@ body {
     @apply font-sans;
   }
 }
+
+/* Markdown Preview Styles */
+.markdown-preview {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown-preview h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 0.67em 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.83em 0;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 1em 0;
+}
+
+.markdown-preview h4 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 1.33em 0;
+}
+
+.markdown-preview p {
+  margin: 0.8em 0;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  padding-left: 2em;
+  margin: 0.5em 0;
+}
+
+.markdown-preview ul {
+  list-style-type: disc;
+}
+
+.markdown-preview ol {
+  list-style-type: decimal;
+}
+
+.markdown-preview li {
+  margin: 0.25em 0;
+}
+
+.markdown-preview li > p {
+  margin: 0.25em 0;
+}
+
+.markdown-preview blockquote {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid #3b82f6;
+  background-color: #f0f7ff;
+  color: #374151;
+}
+
+.markdown-preview pre {
+  margin: 1em 0;
+  padding: 1em;
+  border-radius: 6px;
+  background-color: #f6f8fa;
+  overflow-x: auto;
+}
+
+.markdown-preview pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.9em;
+  border-radius: 0;
+}
+
+.markdown-preview code {
+  background-color: #f0f0f0;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.markdown-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid #d1d5db;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.markdown-preview th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+.markdown-preview tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1.5em 0;
+}
+
+.markdown-preview a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-preview strong {
+  font-weight: 700;
+}
+
+.markdown-preview em {
+  font-style: italic;
+}
+
+/* Dark theme for preview */
+.bg-gray-900 .markdown-preview h1,
+.bg-gray-900 .markdown-preview h2 {
+  border-bottom-color: #374151;
+}
+
+.bg-gray-900 .markdown-preview blockquote {
+  background-color: #1e293b;
+  color: #d1d5db;
+  border-left-color: #60a5fa;
+}
+
+.bg-gray-900 .markdown-preview pre {
+  background-color: #1e293b;
+}
+
+.bg-gray-900 .markdown-preview code {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+.bg-gray-900 .markdown-preview th,
+.bg-gray-900 .markdown-preview td {
+  border-color: #4b5563;
+}
+
+.bg-gray-900 .markdown-preview th {
+  background-color: #1f2937;
+}
+
+.bg-gray-900 .markdown-preview tr:nth-child(even) {
+  background-color: #111827;
+}
+
+.bg-gray-900 .markdown-preview hr {
+  border-top-color: #374151;
+}
+
+.bg-gray-900 .markdown-preview a {
+  color: #60a5fa;
+}
