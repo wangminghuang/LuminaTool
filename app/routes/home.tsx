@@ -96,7 +96,7 @@ export default function Home() {
   const [exporting, setExporting] = useState(false)
   const [settings, setSettings] = useState<PdfSettings>({
     fontSize: 14,
-    lineHeight: 1,
+    lineHeight: 1.1,
     headingSpacing: 0.5,
     marginTop: 8,
     marginBottom: 8,
@@ -109,6 +109,9 @@ export default function Home() {
   })
 
   const previewRef = useRef<HTMLDivElement>(null)
+  const previewContainerRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const isSyncingRef = useRef(false)
 
   // Configure marked with highlight.js
   useEffect(() => {
@@ -153,6 +156,39 @@ export default function Home() {
   }, [markdown, settings.compactMode, settings.noHorizontalLine])
 
   const renderedHtml = renderMarkdown()
+
+  // 双向滚动同步：MD 编辑区与 PDF 预览区按滚动比例联动
+  const handleEditorScroll = useCallback(() => {
+    if (isSyncingRef.current) return
+    const textarea = textareaRef.current
+    const container = previewContainerRef.current
+    if (!textarea || !container) return
+    const textareaMax = textarea.scrollHeight - textarea.clientHeight
+    if (textareaMax <= 0) return
+    const ratio = textarea.scrollTop / textareaMax
+    const containerMax = container.scrollHeight - container.clientHeight
+    isSyncingRef.current = true
+    container.scrollTop = ratio * containerMax
+    requestAnimationFrame(() => {
+      isSyncingRef.current = false
+    })
+  }, [])
+
+  const handlePreviewScroll = useCallback(() => {
+    if (isSyncingRef.current) return
+    const textarea = textareaRef.current
+    const container = previewContainerRef.current
+    if (!textarea || !container) return
+    const containerMax = container.scrollHeight - container.clientHeight
+    if (containerMax <= 0) return
+    const ratio = container.scrollTop / containerMax
+    const textareaMax = textarea.scrollHeight - textarea.clientHeight
+    isSyncingRef.current = true
+    textarea.scrollTop = ratio * textareaMax
+    requestAnimationFrame(() => {
+      isSyncingRef.current = false
+    })
+  }, [])
 
   const updateSetting = <K extends keyof PdfSettings>(key: K, value: PdfSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
@@ -238,15 +274,6 @@ export default function Home() {
               onChange={(e) => updateSetting('fontSize', Number(e.target.value))}
               className="settings-input settings-input-wide"
             />
-            <input
-              type="number"
-              min="10"
-              max="24"
-              step="1"
-              value={settings.fontSize}
-              onChange={(e) => updateSetting('fontSize', Number(e.target.value))}
-              className="settings-number"
-            />
           </div>
 
           {/* Line Height */}
@@ -261,15 +288,6 @@ export default function Home() {
               onChange={(e) => updateSetting('lineHeight', Number(e.target.value))}
               className="settings-input settings-input-wide"
             />
-            <input
-              type="number"
-              min="1"
-              max="3"
-              step="0.1"
-              value={settings.lineHeight}
-              onChange={(e) => updateSetting('lineHeight', Number(e.target.value))}
-              className="settings-number"
-            />
           </div>
 
           {/* Heading Spacing */}
@@ -283,15 +301,6 @@ export default function Home() {
               value={settings.headingSpacing}
               onChange={(e) => updateSetting('headingSpacing', Number(e.target.value))}
               className="settings-input settings-input-wide"
-            />
-            <input
-              type="number"
-              min="0.2"
-              max="3"
-              step="0.1"
-              value={settings.headingSpacing}
-              onChange={(e) => updateSetting('headingSpacing', Number(e.target.value))}
-              className="settings-number"
             />
           </div>
 
@@ -339,15 +348,6 @@ export default function Home() {
               onChange={(e) => updateSetting('marginTop', Number(e.target.value))}
               className="settings-input"
             />
-            <input
-              type="number"
-              min="0"
-              max="50"
-              step="1"
-              value={settings.marginTop}
-              onChange={(e) => updateSetting('marginTop', Number(e.target.value))}
-              className="settings-number"
-            />
           </div>
           <div className="settings-group">
             <label className="settings-label">下边距: {settings.marginBottom}mm</label>
@@ -360,15 +360,6 @@ export default function Home() {
               onChange={(e) => updateSetting('marginBottom', Number(e.target.value))}
               className="settings-input"
             />
-            <input
-              type="number"
-              min="0"
-              max="50"
-              step="1"
-              value={settings.marginBottom}
-              onChange={(e) => updateSetting('marginBottom', Number(e.target.value))}
-              className="settings-number"
-            />
           </div>
           <div className="settings-group">
             <label className="settings-label">左右边距: {settings.marginHorizontal}mm</label>
@@ -380,15 +371,6 @@ export default function Home() {
               value={settings.marginHorizontal}
               onChange={(e) => updateSetting('marginHorizontal', Number(e.target.value))}
               className="settings-input"
-            />
-            <input
-              type="number"
-              min="0"
-              max="50"
-              step="1"
-              value={settings.marginHorizontal}
-              onChange={(e) => updateSetting('marginHorizontal', Number(e.target.value))}
-              className="settings-number"
             />
           </div>
 
@@ -465,9 +447,11 @@ export default function Home() {
             <span className="panel-title">Markdown 编辑</span>
           </div>
           <textarea
+            ref={textareaRef}
             className="editor-textarea"
             value={markdown}
             onChange={(e) => setMarkdown(e.target.value)}
+            onScroll={handleEditorScroll}
             placeholder="在此输入 Markdown 内容..."
             spellCheck={false}
           />
@@ -482,7 +466,11 @@ export default function Home() {
             <Eye className="icon-sm" color="#6b7280" />
             <span className="panel-title">预览</span>
           </div>
-          <div className={`preview-container ${settings.theme === 'dark' ? 'dark' : ''}`}>
+          <div
+            ref={previewContainerRef}
+            className={`preview-container ${settings.theme === 'dark' ? 'dark' : ''}`}
+            onScroll={handlePreviewScroll}
+          >
             <div
               ref={previewRef}
               className="markdown-preview"
