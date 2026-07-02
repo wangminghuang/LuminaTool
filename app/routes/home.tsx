@@ -29,11 +29,12 @@ interface PdfSettings {
   lineHeight: number
   marginTop: number
   marginBottom: number
-  marginLeft: number
-  marginRight: number
+  marginHorizontal: number
   fontFamily: string
   pageSize: string
   theme: 'light' | 'dark'
+  compactMode: boolean
+  noHorizontalLine: boolean
 }
 
 const DEFAULT_MARKDOWN = `# Markdown to PDF 工具
@@ -97,11 +98,12 @@ export default function Home() {
     lineHeight: 1.6,
     marginTop: 20,
     marginBottom: 20,
-    marginLeft: 20,
-    marginRight: 20,
+    marginHorizontal: 20,
     fontFamily: FONT_OPTIONS[0].value,
     pageSize: 'a4',
     theme: 'light',
+    compactMode: false,
+    noHorizontalLine: false,
   })
 
   const previewRef = useRef<HTMLDivElement>(null)
@@ -128,11 +130,25 @@ export default function Home() {
 
   const renderMarkdown = useCallback(() => {
     try {
-      return marked(markdown) as string
+      let content = markdown
+      // 无空行模式：移除多余的空行
+      if (settings.compactMode) {
+        content = content
+          .replace(/\n{3,}/g, '\n\n') // 多个空行变为一个空行
+          .replace(/^\s*\n/gm, '\n') // 移除行首空白后的换行
+          .trim()
+      }
+      // 无横切线模式：移除 Markdown 中的横线
+      if (settings.noHorizontalLine) {
+        content = content.replace(/^\s*---+\s*$/gm, '') // 移除 --- 横线
+        content = content.replace(/^\s*\*\*\*+\s*$/gm, '') // 移除 *** 横线
+        content = content.replace(/^\s*___+\s*$/gm, '') // 移除 ___ 横线
+      }
+      return marked(content) as string
     } catch {
       return '<p>Markdown 解析错误</p>'
     }
-  }, [markdown])
+  }, [markdown, settings.compactMode, settings.noHorizontalLine])
 
   const renderedHtml = renderMarkdown()
 
@@ -148,9 +164,9 @@ export default function Home() {
     const opt = {
       margin: [
         settings.marginTop / 10,
-        settings.marginRight / 10,
+        settings.marginHorizontal / 10,
         settings.marginBottom / 10,
-        settings.marginLeft / 10,
+        settings.marginHorizontal / 10,
       ],
       filename: 'markdown-export.pdf',
       image: { type: 'jpeg', quality: 0.98 },
@@ -180,7 +196,7 @@ export default function Home() {
     fontSize: `${settings.fontSize}px`,
     lineHeight: settings.lineHeight,
     fontFamily: settings.fontFamily,
-    padding: `${settings.marginTop}px ${settings.marginRight}px ${settings.marginBottom}px ${settings.marginLeft}px`,
+    padding: `${settings.marginTop}px ${settings.marginHorizontal}px ${settings.marginBottom}px ${settings.marginHorizontal}px`,
   }
 
   return (
@@ -293,28 +309,38 @@ export default function Home() {
             />
           </div>
           <div className="settings-group">
-            <label className="settings-label">左边距: {settings.marginLeft}mm</label>
+            <label className="settings-label">左右边距: {settings.marginHorizontal}mm</label>
             <input
               type="range"
               min="0"
               max="50"
               step="1"
-              value={settings.marginLeft}
-              onChange={(e) => updateSetting('marginLeft', Number(e.target.value))}
+              value={settings.marginHorizontal}
+              onChange={(e) => updateSetting('marginHorizontal', Number(e.target.value))}
               className="settings-input"
             />
           </div>
+
+          {/* Compact Mode */}
           <div className="settings-group">
-            <label className="settings-label">右边距: {settings.marginRight}mm</label>
-            <input
-              type="range"
-              min="0"
-              max="50"
-              step="1"
-              value={settings.marginRight}
-              onChange={(e) => updateSetting('marginRight', Number(e.target.value))}
-              className="settings-input"
-            />
+            <label className="settings-label">无空行模式</label>
+            <button
+              className={`btn ${settings.compactMode ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => updateSetting('compactMode', !settings.compactMode)}
+            >
+              {settings.compactMode ? '已开启' : '已关闭'}
+            </button>
+          </div>
+
+          {/* No Horizontal Line Mode */}
+          <div className="settings-group">
+            <label className="settings-label">无横切线模式</label>
+            <button
+              className={`btn ${settings.noHorizontalLine ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => updateSetting('noHorizontalLine', !settings.noHorizontalLine)}
+            >
+              {settings.noHorizontalLine ? '已开启' : '已关闭'}
+            </button>
           </div>
 
           {/* Theme */}
