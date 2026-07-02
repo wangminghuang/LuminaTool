@@ -81,6 +81,46 @@ body {
   accent-color: #3b82f6;
 }
 
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings-row .settings-input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.settings-number {
+  width: 4.5rem;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  background: #ffffff;
+  font-size: 0.8125rem;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.settings-number:hover {
+  border-color: #9ca3af;
+}
+
+.settings-number:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.settings-number::-webkit-outer-spin-button,
+.settings-number::-webkit-inner-spin-button {
+  opacity: 1;
+  height: 1.5rem;
+}
+
 .settings-input-wide {
   width: 10rem;
 }

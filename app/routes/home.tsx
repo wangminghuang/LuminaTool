@@ -88,6 +88,54 @@ const PAGE_SIZES = [
   { label: 'Legal', value: 'legal' },
 ]
 
+interface NumberSliderProps {
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  unit?: string
+  onChange: (value: number) => void
+}
+
+function NumberSlider({ label, value, min, max, step, unit, onChange }: NumberSliderProps) {
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value
+    if (raw === '' || raw === '-') return
+    const parsed = Number(raw)
+    if (Number.isNaN(parsed)) return
+    const clamped = Math.min(max, Math.max(min, parsed))
+    onChange(clamped)
+  }
+
+  return (
+    <div className="settings-group">
+      <label className="settings-label">{label}</label>
+      <div className="settings-row">
+        <input
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={handleNumberChange}
+          className="settings-number"
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="settings-input"
+        />
+        {unit && <span className="settings-label">{unit}</span>}
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN)
   const [settingsOpen, setSettingsOpen] = useState(true)
@@ -261,46 +309,36 @@ export default function Home() {
       {settingsOpen && (
         <div className="settings-panel">
           {/* Font Size */}
-          <div className="settings-group">
-            <label className="settings-label">字体大小: {settings.fontSize}px</label>
-            <input
-              type="range"
-              min="10"
-              max="24"
-              step="1"
-              value={settings.fontSize}
-              onChange={(e) => updateSetting('fontSize', Number(e.target.value))}
-              className="settings-input settings-input-wide"
-            />
-          </div>
+          <NumberSlider
+            label="字体大小"
+            value={settings.fontSize}
+            min={10}
+            max={24}
+            step={1}
+            unit="px"
+            onChange={(v) => updateSetting('fontSize', v)}
+          />
 
           {/* Line Height */}
-          <div className="settings-group">
-            <label className="settings-label">行距: {settings.lineHeight}</label>
-            <input
-              type="range"
-              min="1"
-              max="3"
-              step="0.1"
-              value={settings.lineHeight}
-              onChange={(e) => updateSetting('lineHeight', Number(e.target.value))}
-              className="settings-input settings-input-wide"
-            />
-          </div>
+          <NumberSlider
+            label="行距"
+            value={settings.lineHeight}
+            min={1}
+            max={3}
+            step={0.1}
+            onChange={(v) => updateSetting('lineHeight', v)}
+          />
 
           {/* Heading Spacing */}
-          <div className="settings-group">
-            <label className="settings-label">标题间距: {settings.headingSpacing}em</label>
-            <input
-              type="range"
-              min="0.2"
-              max="3"
-              step="0.1"
-              value={settings.headingSpacing}
-              onChange={(e) => updateSetting('headingSpacing', Number(e.target.value))}
-              className="settings-input settings-input-wide"
-            />
-          </div>
+          <NumberSlider
+            label="标题间距"
+            value={settings.headingSpacing}
+            min={0.2}
+            max={3}
+            step={0.1}
+            unit="em"
+            onChange={(v) => updateSetting('headingSpacing', v)}
+          />
 
           {/* Font Family */}
           <div className="settings-group">
@@ -335,30 +373,25 @@ export default function Home() {
           </div>
 
           {/* Margins */}
-          <div className="settings-group">
-            <label className="settings-label">上下边距: {settings.marginVertical}mm</label>
-            <input
-              type="range"
-              min="0"
-              max="50"
-              step="1"
-              value={settings.marginVertical}
-              onChange={(e) => updateSetting('marginVertical', Number(e.target.value))}
-              className="settings-input"
-            />
-          </div>
-          <div className="settings-group">
-            <label className="settings-label">左右边距: {settings.marginHorizontal}mm</label>
-            <input
-              type="range"
-              min="0"
-              max="50"
-              step="1"
-              value={settings.marginHorizontal}
-              onChange={(e) => updateSetting('marginHorizontal', Number(e.target.value))}
-              className="settings-input"
-            />
-          </div>
+          <NumberSlider
+            label="上下边距"
+            value={settings.marginVertical}
+            min={0}
+            max={50}
+            step={1}
+            unit="mm"
+            onChange={(v) => updateSetting('marginVertical', v)}
+          />
+
+          <NumberSlider
+            label="左右边距"
+            value={settings.marginHorizontal}
+            min={0}
+            max={50}
+            step={1}
+            unit="mm"
+            onChange={(v) => updateSetting('marginHorizontal', v)}
+          />
 
           {/* Compact Mode */}
           <div className="settings-group">
