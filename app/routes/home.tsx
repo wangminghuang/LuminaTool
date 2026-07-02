@@ -97,7 +97,7 @@ export default function Home() {
   const [settings, setSettings] = useState<PdfSettings>({
     fontSize: 14,
     lineHeight: 1,
-    headingSpacing: 1.5,
+    headingSpacing: 0.5,
     marginTop: 8,
     marginBottom: 8,
     marginHorizontal: 8,
