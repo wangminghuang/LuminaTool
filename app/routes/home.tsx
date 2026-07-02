@@ -28,8 +28,7 @@ interface PdfSettings {
   fontSize: number
   lineHeight: number
   headingSpacing: number
-  marginTop: number
-  marginBottom: number
+  marginVertical: number
   marginHorizontal: number
   fontFamily: string
   pageSize: string
@@ -98,8 +97,7 @@ export default function Home() {
     fontSize: 14,
     lineHeight: 1.1,
     headingSpacing: 0.5,
-    marginTop: 8,
-    marginBottom: 8,
+    marginVertical: 8,
     marginHorizontal: 8,
     fontFamily: FONT_OPTIONS[0].value,
     pageSize: 'a4',
@@ -201,9 +199,9 @@ export default function Home() {
     const element = previewRef.current
     const opt = {
       margin: [
-        settings.marginTop / 10,
+        settings.marginVertical / 10,
         settings.marginHorizontal / 10,
-        settings.marginBottom / 10,
+        settings.marginVertical / 10,
         settings.marginHorizontal / 10,
       ],
       filename: 'markdown-export.pdf',
@@ -234,7 +232,7 @@ export default function Home() {
     fontSize: `${settings.fontSize}px`,
     lineHeight: settings.lineHeight,
     fontFamily: settings.fontFamily,
-    padding: `${settings.marginTop}px ${settings.marginHorizontal}px ${settings.marginBottom}px ${settings.marginHorizontal}px`,
+    padding: `${settings.marginVertical}px ${settings.marginHorizontal}px ${settings.marginVertical}px ${settings.marginHorizontal}px`,
     '--heading-spacing': `${settings.headingSpacing}em`,
   } as React.CSSProperties
 
@@ -338,26 +336,14 @@ export default function Home() {
 
           {/* Margins */}
           <div className="settings-group">
-            <label className="settings-label">上边距: {settings.marginTop}mm</label>
+            <label className="settings-label">上下边距: {settings.marginVertical}mm</label>
             <input
               type="range"
               min="0"
               max="50"
               step="1"
-              value={settings.marginTop}
-              onChange={(e) => updateSetting('marginTop', Number(e.target.value))}
-              className="settings-input"
-            />
-          </div>
-          <div className="settings-group">
-            <label className="settings-label">下边距: {settings.marginBottom}mm</label>
-            <input
-              type="range"
-              min="0"
-              max="50"
-              step="1"
-              value={settings.marginBottom}
-              onChange={(e) => updateSetting('marginBottom', Number(e.target.value))}
+              value={settings.marginVertical}
+              onChange={(e) => updateSetting('marginVertical', Number(e.target.value))}
               className="settings-input"
             />
           </div>
