@@ -3,7 +3,6 @@ import { marked } from 'marked'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import html2pdf from 'html2pdf.js'
-import { Button } from '~/components/ui/button'
 import {
   FileText,
   Download,
@@ -76,9 +75,9 @@ greet('World')
 `
 
 const FONT_OPTIONS = [
-  { label: '系统默认', value: "'Inter', 'Noto Sans SC', sans-serif" },
-  { label: '衬线体', value: "'Noto Serif SC', 'Georgia', serif" },
-  { label: '等宽体', value: "'JetBrains Mono', 'Fira Code', monospace" },
+  { label: '系统默认', value: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
+  { label: '衬线体', value: "Georgia, 'Times New Roman', serif" },
+  { label: '等宽体', value: "'SF Mono', Monaco, 'Courier New', monospace" },
 ]
 
 const PAGE_SIZES = [
@@ -109,9 +108,21 @@ export default function Home() {
 
   // Configure marked with highlight.js
   useEffect(() => {
-    marked.setOptions({
+    marked.use({
       gfm: true,
       breaks: true,
+      renderer: {
+        code({ text, lang }: { text: string; lang?: string }) {
+          const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
+          let highlighted: string
+          try {
+            highlighted = hljs.highlight(text, { language }).value
+          } catch {
+            highlighted = text
+          }
+          return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`
+        },
+      },
     })
   }, [])
 
@@ -173,225 +184,191 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground">
+    <div className="app">
       {/* Header */}
-      <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-2">
-        <div className="flex items-center gap-2">
-          <FileText className="size-5 text-primary" />
-          <h1 className="text-lg font-bold">Markdown to PDF</h1>
+      <header className="header">
+        <div className="header-left">
+          <FileText className="icon-lg" color="#3b82f6" />
+          <h1 className="header-title">Markdown to PDF</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSettingsOpen(!settingsOpen)}
-          >
-            <Settings className="size-4" />
-            <span className="ml-1">设置</span>
-            {settingsOpen ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleExportPdf}
-            disabled={exporting}
-          >
-            <Download className="size-4" />
-            <span className="ml-1">{exporting ? '导出中...' : '导出 PDF'}</span>
-          </Button>
+        <div className="header-right">
+          <button className="btn btn-secondary" onClick={() => setSettingsOpen(!settingsOpen)}>
+            <Settings className="icon" />
+            <span>设置</span>
+            {settingsOpen ? <ChevronUp className="icon-sm" /> : <ChevronDown className="icon-sm" />}
+          </button>
+          <button className="btn btn-primary" onClick={handleExportPdf} disabled={exporting}>
+            <Download className="icon" />
+            <span>{exporting ? '导出中...' : '导出 PDF'}</span>
+          </button>
         </div>
       </header>
 
       {/* Settings Panel */}
       {settingsOpen && (
-        <div className="shrink-0 border-b border-border bg-muted/30 px-4 py-3">
-          <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-            {/* Font Size */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                字体大小: {settings.fontSize}px
-              </label>
-              <input
-                type="range"
-                min="10"
-                max="24"
-                step="1"
-                value={settings.fontSize}
-                onChange={(e) => updateSetting('fontSize', Number(e.target.value))}
-                className="h-2 w-32 cursor-pointer accent-primary"
-              />
-            </div>
+        <div className="settings-panel">
+          {/* Font Size */}
+          <div className="settings-group">
+            <label className="settings-label">字体大小: {settings.fontSize}px</label>
+            <input
+              type="range"
+              min="10"
+              max="24"
+              step="1"
+              value={settings.fontSize}
+              onChange={(e) => updateSetting('fontSize', Number(e.target.value))}
+              className="settings-input settings-input-wide"
+            />
+          </div>
 
-            {/* Line Height */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                行距: {settings.lineHeight}
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="0.1"
-                value={settings.lineHeight}
-                onChange={(e) => updateSetting('lineHeight', Number(e.target.value))}
-                className="h-2 w-32 cursor-pointer accent-primary"
-              />
-            </div>
+          {/* Line Height */}
+          <div className="settings-group">
+            <label className="settings-label">行距: {settings.lineHeight}</label>
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.1"
+              value={settings.lineHeight}
+              onChange={(e) => updateSetting('lineHeight', Number(e.target.value))}
+              className="settings-input settings-input-wide"
+            />
+          </div>
 
-            {/* Font Family */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">字体</label>
-              <select
-                value={settings.fontFamily}
-                onChange={(e) => updateSetting('fontFamily', e.target.value)}
-                className="h-8 rounded-md border border-border bg-background px-2 text-sm"
+          {/* Font Family */}
+          <div className="settings-group">
+            <label className="settings-label">字体</label>
+            <select
+              value={settings.fontFamily}
+              onChange={(e) => updateSetting('fontFamily', e.target.value)}
+              className="settings-select"
+            >
+              {FONT_OPTIONS.map((opt) => (
+                <option key={opt.label} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Page Size */}
+          <div className="settings-group">
+            <label className="settings-label">纸张大小</label>
+            <select
+              value={settings.pageSize}
+              onChange={(e) => updateSetting('pageSize', e.target.value)}
+              className="settings-select"
+            >
+              {PAGE_SIZES.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Margins */}
+          <div className="settings-group">
+            <label className="settings-label">上边距: {settings.marginTop}mm</label>
+            <input
+              type="range"
+              min="0"
+              max="50"
+              step="1"
+              value={settings.marginTop}
+              onChange={(e) => updateSetting('marginTop', Number(e.target.value))}
+              className="settings-input"
+            />
+          </div>
+          <div className="settings-group">
+            <label className="settings-label">下边距: {settings.marginBottom}mm</label>
+            <input
+              type="range"
+              min="0"
+              max="50"
+              step="1"
+              value={settings.marginBottom}
+              onChange={(e) => updateSetting('marginBottom', Number(e.target.value))}
+              className="settings-input"
+            />
+          </div>
+          <div className="settings-group">
+            <label className="settings-label">左边距: {settings.marginLeft}mm</label>
+            <input
+              type="range"
+              min="0"
+              max="50"
+              step="1"
+              value={settings.marginLeft}
+              onChange={(e) => updateSetting('marginLeft', Number(e.target.value))}
+              className="settings-input"
+            />
+          </div>
+          <div className="settings-group">
+            <label className="settings-label">右边距: {settings.marginRight}mm</label>
+            <input
+              type="range"
+              min="0"
+              max="50"
+              step="1"
+              value={settings.marginRight}
+              onChange={(e) => updateSetting('marginRight', Number(e.target.value))}
+              className="settings-input"
+            />
+          </div>
+
+          {/* Theme */}
+          <div className="settings-group">
+            <label className="settings-label">主题</label>
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <button
+                className={`btn btn-icon ${settings.theme === 'light' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('theme', 'light')}
               >
-                {FONT_OPTIONS.map((opt) => (
-                  <option key={opt.label} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Page Size */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">纸张大小</label>
-              <select
-                value={settings.pageSize}
-                onChange={(e) => updateSetting('pageSize', e.target.value)}
-                className="h-8 rounded-md border border-border bg-background px-2 text-sm"
+                <Sun className="icon" />
+              </button>
+              <button
+                className={`btn btn-icon ${settings.theme === 'dark' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('theme', 'dark')}
               >
-                {PAGE_SIZES.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Margins */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                上边距: {settings.marginTop}mm
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="50"
-                step="1"
-                value={settings.marginTop}
-                onChange={(e) => updateSetting('marginTop', Number(e.target.value))}
-                className="h-2 w-24 cursor-pointer accent-primary"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                下边距: {settings.marginBottom}mm
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="50"
-                step="1"
-                value={settings.marginBottom}
-                onChange={(e) => updateSetting('marginBottom', Number(e.target.value))}
-                className="h-2 w-24 cursor-pointer accent-primary"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                左边距: {settings.marginLeft}mm
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="50"
-                step="1"
-                value={settings.marginLeft}
-                onChange={(e) => updateSetting('marginLeft', Number(e.target.value))}
-                className="h-2 w-24 cursor-pointer accent-primary"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                右边距: {settings.marginRight}mm
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="50"
-                step="1"
-                value={settings.marginRight}
-                onChange={(e) => updateSetting('marginRight', Number(e.target.value))}
-                className="h-2 w-24 cursor-pointer accent-primary"
-              />
-            </div>
-
-            {/* Theme */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">主题</label>
-              <div className="flex gap-1">
-                <Button
-                  variant={settings.theme === 'light' ? 'default' : 'outline'}
-                  size="icon-sm"
-                  onClick={() => updateSetting('theme', 'light')}
-                >
-                  <Sun className="size-4" />
-                </Button>
-                <Button
-                  variant={settings.theme === 'dark' ? 'default' : 'outline'}
-                  size="icon-sm"
-                  onClick={() => updateSetting('theme', 'dark')}
-                >
-                  <Moon className="size-4" />
-                </Button>
-              </div>
+                <Moon className="icon" />
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* Mobile Tab Switcher */}
-      <div className="flex shrink-0 border-b border-border md:hidden">
+      <div className="tab-switcher">
         <button
-          className={`flex flex-1 items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'edit'
-              ? 'border-b-2 border-primary text-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className={`tab-btn ${activeTab === 'edit' ? 'active' : ''}`}
           onClick={() => setActiveTab('edit')}
         >
-          <Edit3 className="size-4" />
-          编辑
+          <Edit3 className="icon" />
+          <span>编辑</span>
         </button>
         <button
-          className={`flex flex-1 items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'preview'
-              ? 'border-b-2 border-primary text-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
           onClick={() => setActiveTab('preview')}
         >
-          <Eye className="size-4" />
-          预览
+          <Eye className="icon" />
+          <span>预览</span>
         </button>
       </div>
 
       {/* Main Content */}
-      <div className="flex min-h-0 flex-1">
+      <div className="main-content">
         {/* Editor Panel */}
         <div
-          className={`flex flex-col border-r border-border ${
-            activeTab === 'edit' ? 'flex' : 'hidden'
-          } md:flex md:w-1/2`}
+          className={`editor-panel ${activeTab !== 'edit' ? 'hidden' : ''}`}
+          style={{ display: activeTab === 'edit' ? 'flex' : undefined }}
         >
-          <div className="flex items-center gap-1.5 border-b border-border px-3 py-1.5">
-            <Edit3 className="size-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">Markdown 编辑</span>
+          <div className="panel-header">
+            <Edit3 className="icon-sm" color="#6b7280" />
+            <span className="panel-title">Markdown 编辑</span>
           </div>
           <textarea
-            className="flex-1 resize-none bg-background p-4 font-mono text-sm leading-relaxed outline-none placeholder:text-muted-foreground/50"
+            className="editor-textarea"
             value={markdown}
             onChange={(e) => setMarkdown(e.target.value)}
             placeholder="在此输入 Markdown 内容..."
@@ -401,22 +378,17 @@ export default function Home() {
 
         {/* Preview Panel */}
         <div
-          className={`flex flex-col ${
-            activeTab === 'preview' ? 'flex' : 'hidden'
-          } md:flex md:w-1/2`}
+          className={`preview-panel ${activeTab !== 'preview' ? 'hidden' : ''}`}
+          style={{ display: activeTab === 'preview' ? 'flex' : undefined }}
         >
-          <div className="flex items-center gap-1.5 border-b border-border px-3 py-1.5">
-            <Eye className="size-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">预览</span>
+          <div className="panel-header">
+            <Eye className="icon-sm" color="#6b7280" />
+            <span className="panel-title">预览</span>
           </div>
-          <div
-            className={`flex-1 overflow-auto ${
-              settings.theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'
-            }`}
-          >
+          <div className={`preview-container ${settings.theme === 'dark' ? 'dark' : ''}`}>
             <div
               ref={previewRef}
-              className="markdown-preview mx-auto max-w-none"
+              className="markdown-preview"
               style={previewStyle}
               dangerouslySetInnerHTML={{ __html: renderedHtml }}
             />
