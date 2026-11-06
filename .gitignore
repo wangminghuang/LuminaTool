@@ -9,3 +9,6 @@
 # IDE files
 .idea/
 .vscode/
+
+# WorkBuddy 项目数据与记忆
+/.workbuddy/
