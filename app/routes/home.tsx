@@ -1,7 +1,9 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { marked } from 'marked'
+import markedKatex from 'marked-katex-extension'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
+import 'katex/dist/katex.min.css'
 import html2pdf from 'html2pdf.js'
 import {
   FileText,
@@ -70,6 +72,21 @@ greet('World')
 
 > 这是一段引用文字，可以用来展示引用块的样式效果。
 
+## 数学公式
+
+行内公式：$E = mc^2$，勾股定理 $a^2 + b^2 = c^2$。
+
+块级公式：
+
+$$
+\\int_{0}^{1} x^{2}\\,\\mathrm{d}x = \\frac{1}{3}
+$$
+
+$$
+\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}, \\quad
+\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}
+$$
+
 ---
 
 *开始编辑左侧的 Markdown 内容，右侧将实时预览效果。*
@@ -87,6 +104,57 @@ const PAGE_SIZES = [
   { label: 'Letter', value: 'letter' },
   { label: 'Legal', value: 'legal' },
 ]
+
+// 在模块作用域配置 marked：代码高亮 + LaTeX 公式（KATEX）
+// 放在模块级而不是 useEffect 里，保证首次渲染就能正确输出公式与高亮
+marked.use(
+  {
+    gfm: true,
+    breaks: true,
+    renderer: {
+      code({ text, lang }: { text: string; lang?: string }) {
+        const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
+        let highlighted: string
+        try {
+          highlighted = hljs.highlight(text, { language }).value
+        } catch {
+          highlighted = text
+        }
+        return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`
+      },
+    },
+  },
+  markedKatex({
+    throwOnError: false,
+    output: 'html',
+    nonStandard: true,
+    strict: 'ignore',
+    trust: false,
+  })
+)
+
+// marked-katex-extension 只认 $$...$$（行间）和 $...$（行内），
+// 这里把 LaTeX 原生的 \[...\] / \(...\) 统一转换过去，转换时跳过代码块与行内代码
+function normalizeMathDelimiters(markdown: string): string {
+  if (!markdown.includes('\\[') && !markdown.includes('\\(')) return markdown
+
+  const codeSegments: string[] = []
+  const protectedText = markdown.replace(
+    /```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`/g,
+    (segment) => {
+      codeSegments.push(segment)
+      return `\u0000CODE${codeSegments.length - 1}\u0000`
+    }
+  )
+
+  const converted = protectedText
+    // \[ ... \] => $$ ... $$（独占段落，保证渲染成行间公式）
+    .replace(/\\\[([\s\S]*?)\\\]/g, (_match, body: string) => `\n\n$$\n${body.trim()}\n$$\n\n`)
+    // \( ... \) => $ ... $
+    .replace(/\\\(([\s\S]*?)\\\)/g, (_match, body: string) => `$${body.trim()}$`)
+
+  return converted.replace(/\u0000CODE(\d+)\u0000/g, (_match, index: string) => codeSegments[Number(index)])
+}
 
 interface NumberSliderProps {
   label: string
@@ -136,8 +204,36 @@ function NumberSlider({ label, value, min, max, step, unit, onChange }: NumberSl
   )
 }
 
-export default function Home() {
-  const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN)
+// 导出前把超宽的行间公式整体等比缩小，避免被 html2canvas 按元素宽度裁掉。
+// 返回一个还原函数，导出结束后调用。
+function fitOverflowingMath(root: HTMLElement): () => void {
+  const restored: { el: HTMLElement; fontSize: string }[] = []
+  const displays = root.querySelectorAll<HTMLElement>('.katex-display')
+
+  displays.forEach((display) => {
+    const available = display.clientWidth
+    const contentWidth = display.scrollWidth
+    if (!available || contentWidth <= available + 1) return
+
+    const katex = display.querySelector<HTMLElement>('.katex')
+    if (!katex) return
+
+    const scale = Math.max(0.45, available / contentWidth)
+    if (scale >= 0.999) return
+
+    const current = parseFloat(window.getComputedStyle(katex).fontSize) || 16
+    restored.push({ el: katex, fontSize: katex.style.fontSize })
+    katex.style.fontSize = `${current * scale}px`
+  })
+
+  return () => {
+    restored.forEach(({ el, fontSize }) => {
+      el.style.fontSize = fontSize
+    })
+  }
+}
+
+export default function Home() {  const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN)
   const [settingsOpen, setSettingsOpen] = useState(true)
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [exporting, setExporting] = useState(false)
@@ -159,29 +255,9 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isSyncingRef = useRef(false)
 
-  // Configure marked with highlight.js
-  useEffect(() => {
-    marked.use({
-      gfm: true,
-      breaks: true,
-      renderer: {
-        code({ text, lang }: { text: string; lang?: string }) {
-          const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
-          let highlighted: string
-          try {
-            highlighted = hljs.highlight(text, { language }).value
-          } catch {
-            highlighted = text
-          }
-          return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`
-        },
-      },
-    })
-  }, [])
-
   const renderMarkdown = useCallback(() => {
     try {
-      let content = markdown
+      let content = normalizeMathDelimiters(markdown)
       // 无空行模式：移除多余的空行
       if (settings.compactMode) {
         content = content
@@ -245,6 +321,17 @@ export default function Home() {
     setExporting(true)
 
     const element = previewRef.current
+
+    // 公式字体是 web font，必须等字体真正加载完再截图，否则导出会变成方块/乱码
+    try {
+      await document.fonts?.ready
+    } catch {
+      /* 不支持 FontFaceSet 的环境忽略 */
+    }
+
+    // 超宽行间公式等比缩小，避免被裁切
+    const restoreMath = fitOverflowingMath(element)
+
     const opt = {
       margin: [
         settings.marginVertical / 10,
@@ -264,7 +351,7 @@ export default function Home() {
         format: settings.pageSize,
         orientation: 'portrait' as const,
       },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'pre', 'table', 'tr', 'img'] },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'pre', 'table', 'tr', 'img', '.katex-display'] },
     }
 
     try {
@@ -272,6 +359,7 @@ export default function Home() {
     } catch (err) {
       console.error('PDF export failed:', err)
     } finally {
+      restoreMath()
       setExporting(false)
     }
   }

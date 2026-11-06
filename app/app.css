@@ -469,6 +469,41 @@ body {
   font-style: italic;
 }
 
+/* KaTeX 数学公式 */
+.markdown-preview .katex {
+  /* 跟随正文字号，行内公式不额外撑高行距 */
+  font-size: 1.05em;
+}
+
+.markdown-preview .katex-display {
+  margin: 1em 0;
+  padding: 0.15em 0;
+  /* 超宽公式横向滚动，而不是撑破预览宽度 */
+  overflow: auto;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.markdown-preview .katex-display::-webkit-scrollbar {
+  height: 6px;
+}
+
+.markdown-preview .katex-display::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.preview-container.dark .markdown-preview .katex-display::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+/* 公式语法错误时的提示（throwOnError: false 时由 KaTeX 输出） */
+.markdown-preview .katex-error {
+  color: #dc2626;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
 /* Dark theme for preview */
 .preview-container.dark .markdown-preview h1,
 .preview-container.dark .markdown-preview h2 {
