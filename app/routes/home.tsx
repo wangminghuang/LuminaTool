@@ -4,7 +4,6 @@ import markedKatex from 'marked-katex-extension'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import 'katex/dist/katex.min.css'
-import html2pdf from 'html2pdf.js'
 import {
   FileText,
   Download,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react'
 
 import type { Route } from './+types/home'
+import { downloadPdfDiagnostics, exportHtmlElementToPdf } from '../lib/pdf-export-core'
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -204,39 +204,11 @@ function NumberSlider({ label, value, min, max, step, unit, onChange }: NumberSl
   )
 }
 
-// 导出前把超宽的行间公式整体等比缩小，避免被 html2canvas 按元素宽度裁掉。
-// 返回一个还原函数，导出结束后调用。
-function fitOverflowingMath(root: HTMLElement): () => void {
-  const restored: { el: HTMLElement; fontSize: string }[] = []
-  const displays = root.querySelectorAll<HTMLElement>('.katex-display')
-
-  displays.forEach((display) => {
-    const available = display.clientWidth
-    const contentWidth = display.scrollWidth
-    if (!available || contentWidth <= available + 1) return
-
-    const katex = display.querySelector<HTMLElement>('.katex')
-    if (!katex) return
-
-    const scale = Math.max(0.45, available / contentWidth)
-    if (scale >= 0.999) return
-
-    const current = parseFloat(window.getComputedStyle(katex).fontSize) || 16
-    restored.push({ el: katex, fontSize: katex.style.fontSize })
-    katex.style.fontSize = `${current * scale}px`
-  })
-
-  return () => {
-    restored.forEach(({ el, fontSize }) => {
-      el.style.fontSize = fontSize
-    })
-  }
-}
-
 export default function Home() {  const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN)
   const [settingsOpen, setSettingsOpen] = useState(true)
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [exporting, setExporting] = useState(false)
+  const [diagnosticsText, setDiagnosticsText] = useState<string | null>(null)
   const [settings, setSettings] = useState<PdfSettings>({
     fontSize: 14,
     lineHeight: 1.1,
@@ -319,47 +291,19 @@ export default function Home() {  const [markdown, setMarkdown] = useState(DEFAU
   const handleExportPdf = async () => {
     if (!previewRef.current) return
     setExporting(true)
-
-    const element = previewRef.current
-
-    // 公式字体是 web font，必须等字体真正加载完再截图，否则导出会变成方块/乱码
     try {
-      await document.fonts?.ready
-    } catch {
-      /* 不支持 FontFaceSet 的环境忽略 */
-    }
-
-    // 超宽行间公式等比缩小，避免被裁切
-    const restoreMath = fitOverflowingMath(element)
-
-    const opt = {
-      margin: [
-        settings.marginVertical / 10,
-        settings.marginHorizontal / 10,
-        settings.marginVertical / 10,
-        settings.marginHorizontal / 10,
-      ],
-      filename: 'markdown-export.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
+      const result = await exportHtmlElementToPdf({
+        element: previewRef.current,
+        settings,
+        markdown,
+        renderedHtmlLength: renderedHtml.length,
         scale: 2,
-        useCORS: true,
-        letterRendering: true,
-      },
-      jsPDF: {
-        unit: 'cm',
-        format: settings.pageSize,
-        orientation: 'portrait' as const,
-      },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'pre', 'table', 'tr', 'img', '.katex-display'] },
-    }
-
-    try {
-      await html2pdf().set(opt).from(element).save()
-    } catch (err) {
-      console.error('PDF export failed:', err)
+        filename: 'markdown-export.pdf',
+      })
+      setDiagnosticsText(result.diagnosticsText)
+    } catch (error) {
+      console.error('[PDF] 导出诊断模块调用失败:', error)
     } finally {
-      restoreMath()
       setExporting(false)
     }
   }
@@ -386,6 +330,16 @@ export default function Home() {  const [markdown, setMarkdown] = useState(DEFAU
             <span>设置</span>
             {settingsOpen ? <ChevronUp className="icon-sm" /> : <ChevronDown className="icon-sm" />}
           </button>
+          {diagnosticsText && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => downloadPdfDiagnostics(diagnosticsText)}
+              disabled={exporting}
+            >
+              <Download className="icon" />
+              <span>下载诊断 TXT</span>
+            </button>
+          )}
           <button className="btn btn-primary" onClick={handleExportPdf} disabled={exporting}>
             <Download className="icon" />
             <span>{exporting ? '导出中...' : '导出 PDF'}</span>

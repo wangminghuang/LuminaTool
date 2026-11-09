@@ -17,12 +17,18 @@ importers:
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
+      html2canvas:
+        specifier: 1.4.1
+        version: 1.4.1
       html2pdf.js:
         specifier: ^0.14.0
         version: 0.14.0
       isbot:
         specifier: ^5.1.36
         version: 5.1.40
+      jspdf:
+        specifier: 4.2.1
+        version: 4.2.1
       katex:
         specifier: ^0.19.1
         version: 0.19.1
